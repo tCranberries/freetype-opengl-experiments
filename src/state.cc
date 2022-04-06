@@ -2,8 +2,7 @@
 #include "./state.h"
 
 namespace state {
-State::State(unsigned int width, unsigned int height, unsigned int line_height,
-             int start_line)
+State::State(unsigned int width, unsigned int height, unsigned int line_height, int start_line)
     : width_(width),
       height_(height),
       line_height_(line_height),

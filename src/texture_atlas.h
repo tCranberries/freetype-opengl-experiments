@@ -18,71 +18,76 @@
 
 #include <glm/glm.hpp>
 
+#include "dir/Character.h"
+
+
 namespace texture_atlas {
-using std::pair;
-using std::unordered_map;
-using std::vector;
+    using std::pair;
+    using std::unordered_map;
+    using std::vector;
 
-struct Character {
-  size_t texture_array_index;
-  glm::vec2 texture_coordinates;
-  size_t texture_id;
-  glm::ivec2 size;
-  glm::ivec2 bearing;
+//    struct Character {
+//                                        // 在插入到 纹理缓存 中时获取相关信息
+//        size_t texture_array_index;     // 在纹理缓存中的位置  index
+//        glm::vec2 texture_coordinates;  // 纹理的 坐标
+//        size_t texture_id;              // 纹理的 id
+//
+//        glm::ivec2 size;                // glyph 相关， 在 RenderGlyph 中通过  glyph 的相关信息获取
+//        glm::ivec2 bearing;
+//        GLuint advance;
+//        bool colored;
+//    };
 
-  GLuint advance;
+    class TextureAtlas {
+    private:
+//        typedef struct {
+//            Character character;
+//            bool fresh;
+//        } cache_element_t;
 
-  bool colored;
-};
+        // 当前纹理位置
+        GLuint index_ = 0;
+        GLuint texture_ = 0;
+        GLsizei textureWidth_, textureHeight_;
 
-class TextureAtlas {
- private:
-  typedef struct {
-    Character character;
-    bool fresh;
-  } cache_element_t;
+        /*
+         * glyph index -> Character， 缓存大小 1024
+         */
+        //unordered_map<hb_codepoint_t, cache_element_t> texture_cache_;
+        GLenum format_;
 
-  GLuint index_ = 0;
-  GLuint texture_;
-  GLsizei textureWidth_, textureHeight_;
+    public:
+        TextureAtlas(GLsizei textureWidth,
+                     GLsizei textureHeight,
+                     GLuint shaderProgramId,
+                     const char* textureUniformLocation,
+                     GLenum internalformat,
+                     GLenum format,
+                     GLint shader_texture_index);
 
-  unordered_map<hb_codepoint_t, cache_element_t> texture_cache_;
-  GLenum format_;
+        ~TextureAtlas();
 
- public:
-  TextureAtlas(GLsizei textureWidth, GLsizei textureHeight,
-               GLuint shaderProgramId, const char* textureUniformLocation,
-               GLenum internalformat, GLenum format,
-               GLint shader_texture_index);
+        // void Insert(const vector<unsigned char>& bitmap_buffer, GLsizei width, GLsizei height, Character* ch, GLuint offset);
+        void Insert(Character& ch);
 
-  ~TextureAtlas();
+//        void Insert(hb_codepoint_t glyphIndex, pair<Character, vector<unsigned char>>* ch);
+//
+//        void Append(pair<Character, vector<unsigned char>>* p, hb_codepoint_t codepoint);
+//
+//        void Replace(pair<Character, vector<unsigned char>>* p, hb_codepoint_t stale, hb_codepoint_t codepoint);
+//
+//        bool Contains(hb_codepoint_t codepoint) const;
+//
+//        Character* Get(hb_codepoint_t codepoint);
+//
+//        bool IsFull() const;
+//
+//        bool Contains_stale() const;
+//
+//        void Invalidate();
 
-  void Insert(const vector<unsigned char>& bitmap_buffer, GLsizei width,
-              GLsizei height, Character* ch, GLuint offset);
-
-  void Append(pair<Character, vector<unsigned char>>* p,
-              hb_codepoint_t codepoint);
-
-  void Replace(pair<Character, vector<unsigned char>>* p, hb_codepoint_t stale,
-               hb_codepoint_t codepoint);
-
-  bool Contains(hb_codepoint_t codepoint) const;
-
-  Character* Get(hb_codepoint_t codepoint);
-  void Insert(hb_codepoint_t codepoint,
-              pair<Character, vector<unsigned char>>* ch);
-
-  pair<Character, vector<unsigned char>> RenderGlyph(FT_Face face,
-                                                     hb_codepoint_t codepoint);
-
-  bool IsFull() const;
-
-  bool Contains_stale() const;
-
-  void Invalidate();
-
-  GLuint GetTexture() const;
-};
+        GLuint GetTexture() const;
+    };
 }  // namespace texture_atlas
 
 #endif  // SRC_TEXTURE_ATLAS_H_

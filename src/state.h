@@ -5,8 +5,7 @@
 namespace state {
 class State {
  public:
-  State(unsigned int width, unsigned int height, unsigned int line_height,
-        int start_line);
+  State(unsigned int width, unsigned int height, unsigned int line_height, int start_line);
   ~State();
   void UpdateDimensions(unsigned int width, unsigned int height) {
     width_ = width;

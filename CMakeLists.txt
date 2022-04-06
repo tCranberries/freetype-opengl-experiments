@@ -4,10 +4,10 @@ project(opengl VERSION 0.1.0)
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON")
 
 
-find_library(glfw3 REQUIRED)
-find_library(freetype2 REQUIRED)
-find_library(libpng16 REQUIRED)
-find_library(harfbuzz REQUIRED)
+find_library(glfw3 libglfw3.a /usr/lib/)
+find_library(freetype2 libfreetype.a /usr/lib/x86_64-linux-gnu)
+find_library(libpng16 libpng16.a /usr/lib/x86_64-linux-gnu)
+find_library(harfbuzz libharfbuzz.a /usr/local/lib)
 
 include_directories(/usr/include/freetype2)
 include_directories(/usr/include/libpng16)
@@ -21,7 +21,7 @@ add_executable(opengl
   src/renderer.cc
   src/face_collection.cc
   lib/glad/src/glad.c
-)
+        src/dir/Text.cpp src/dir/Text.h src/dir/TextDirection.h src/dir/TextLanguage.h src/dir/ErrorCode.h src/dir/Face.cpp src/dir/Face.h src/dir/TextBox.cpp src/dir/TextBox.h src/dir/FaceCollection.cpp src/dir/FaceCollection.h src/dir/Util.cpp src/dir/Util.h src/dir/Character.cpp src/dir/Character.h src/dir/CharacterCache.cpp src/dir/CharacterCache.h src/dir/Renderer.cpp src/dir/Renderer.h)
 
 set_source_files_properties(lib/glad/src/glad.c PROPERTIES COMPILE_FLAGS -Wno-error -Wno-all -Wno-extra)
 

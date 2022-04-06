@@ -18,9 +18,16 @@
 #include "./state.h"
 #include "./texture_atlas.h"
 
+// dir
+#include "dir/Text.h"
+#include "dir/FaceCollection.h"
+#include "dir/Face.h"
+#include "dir/Renderer.h"
+
+
 namespace renderer {
-using face_collection::AssignCodepointsFaces;
-using face_collection::FaceCollection;
+//using face_collection::AssignCodepointsFaces;
+//using face_collection::FaceCollection;
 using shaping_cache::CodePointsFacePair;
 using shaping_cache::ShapingCache;
 using state::State;
@@ -29,14 +36,16 @@ using std::get;
 using std::pair;
 using std::string;
 using std::vector;
-using texture_atlas::Character;
 using texture_atlas::TextureAtlas;
-void Render(const Shader &shader, const vector<string> &lines,
-            const FaceCollection &faces, ShapingCache *shaping_cache,
-            const vector<TextureAtlas *> &texture_atlases, const State &state,
-            GLuint VAO, GLuint VBO);
-pair<Character, vector<unsigned char>> RenderGlyph(FT_Face face,
-                                                   hb_codepoint_t codepoint);
+void Render(Renderer fontRender,
+        const Shader &shader,
+            Text& text,
+            FaceCollection& faceCollection,
+            const vector<TextureAtlas *> &texture_atlases,
+            GLuint VAO,
+            GLuint VBO);
+pair<Character, vector<unsigned char>> RenderGlyph(FT_Face face, hb_codepoint_t codepoint);
+
 }  // namespace renderer
 
 #endif  // SRC_RENDERER_H_

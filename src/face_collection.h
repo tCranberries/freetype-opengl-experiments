@@ -29,12 +29,10 @@ using std::tuple;
 using std::vector;
 
 using SizedFace = tuple<FT_Face, GLsizei, GLsizei>;
-using FaceCollection = vector<SizedFace>;
+// using FaceCollection = vector<SizedFace>;
 
-FaceCollection LoadFaces(FT_Library ft, const vector<string> &face_names);
-void AssignCodepointsFaces(const string &text, const FaceCollection &faces,
-                           CodePointsFacePair *codepoint_faces_pair,
-                           hb_buffer_t *buf);
+// FaceCollection LoadFaces(FT_Library ft, const vector<string> &face_names);
+// void AssignCodepointsFaces(const string &text, const FaceCollection &faces, CodePointsFacePair *codepoint_faces_pair, hb_buffer_t *buf);
 
 }  // namespace face_collection
 
