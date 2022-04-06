@@ -27,15 +27,9 @@ private:
 
     // 从上向下优先级越来越低，可能需要动态不同 face 的位置来调整优先级
     /*
-     * 普通 font face 的集合
+     * font face 的集合
      */
     std::vector<Face> mFaces;
-
-    /*
-     * 专门用于存放 emoji face
-     */
-    std::vector<Face> mEmojiFaces;
-
 
     std::vector<std::string> mFontFiles;
 

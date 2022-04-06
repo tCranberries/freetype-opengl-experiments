@@ -36,9 +36,6 @@ FaceCollection::~FaceCollection() {
     for (auto& face : mFaces) {
         face.destroy();
     }
-    for (auto& face : mEmojiFaces) {
-        face.destroy();
-    }
 
     FT_Done_FreeType(ft);
     hb_buffer_destroy(buffer);
@@ -99,18 +96,13 @@ void FaceCollection::loadFaces() {
 
         Face faceL(face, fontFile, width, height);
         // 只在此处 new FontFace
-        if (FT_HAS_COLOR(face)) {
-            mEmojiFaces.push_back(faceL);
-        }
-        else {
-            mFaces.push_back(faceL);
-        }
+        mFaces.push_back(faceL);
     }
 }
 
 
 void FaceCollection::assignCodepointsFaces(Text &text) {
-    assert(!mFaces.empty() && !mEmojiFaces.empty());
+    assert(!mFaces.empty());
     std::vector<std::string> lines = text.getLines();
     assert(!lines.empty());
 
@@ -125,11 +117,6 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
         // 获取该行的 utf8 编码，也就是 codepoint, 根据 codepoint 分段
 
 
-
-        // 记录 emoji 的 index
-        std::vector<unsigned int> emojiIndexes;
-        // 记录 character 的 index
-        std::vector<unsigned int> charIndexes;
         std::vector<ShapeCacheElement> lineGlyphCache;
 
         bool isAllCharacterHasFace = false;
@@ -166,14 +153,6 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
 
                     std::cout << k << ":   codepoint: " << std::hex << _glyphInfo[k].codepoint << std::endl;
 
-
-
-                    if (isEmoji) {
-                        emojiIndexes.push_back(k);
-                    }
-                    else {
-                        charIndexes.push_back(k);
-                    }
                     lineGlyphCache[k].isEmoji = isEmoji;
                     lineGlyphCache[k].codepoint = _glyphInfo[k].codepoint;
                     lineGlyphCache[k].faceIndex = MISSING_FLAG;
@@ -191,10 +170,9 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
             // get the glyph information
             unsigned int glyphCount;
             hb_glyph_info_t *glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
-            for (unsigned int index : charIndexes) {
+            for (unsigned int index = 0; index < glyphCount; index++) {
                 hb_codepoint_t glyphIndex = glyphInfo[index].codepoint;
                 if (glyphIndex != 0 && lineGlyphCache[index].faceIndex == MISSING_FLAG) {
-                    lineGlyphCache[index].isEmoji = false;
                     lineGlyphCache[index].faceIndex = i;
                     lineGlyphCache[index].glyphIndex = glyphIndex;
                 }
@@ -206,49 +184,10 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
             hb_font_destroy(font);
         }
 
-
-
-        /**
-         * 处理行中的 emoji
-         */
-        bool isAllEmojiHasFace = false;
-        if (!emojiIndexes.empty()) {
-            for (unsigned int i = 0; (i < mEmojiFaces.size()) && !isAllEmojiHasFace; i++) {
-                isAllEmojiHasFace = true;
-
-                hb_buffer_clear_contents(buffer);
-                hb_buffer_add_utf8(buffer, line.c_str(), (int)line.length(), 0, -1);
-                hb_buffer_guess_segment_properties(buffer);
-
-                FT_Face face;
-                face = mEmojiFaces[i].getFace();
-                hb_font_t *font = hb_ft_font_create(face, nullptr);
-
-                hb_shape(font, buffer, nullptr, 0);
-                unsigned int glyphCount;
-                hb_glyph_info_t *glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
-
-                for (unsigned int index : emojiIndexes) {
-                    hb_codepoint_t glyphIndex = glyphInfo[index].codepoint;
-                    if (glyphIndex != 0 && lineGlyphCache[index].faceIndex == MISSING_FLAG) {
-                        lineGlyphCache[index].isEmoji = true;
-                        lineGlyphCache[index].faceIndex = i;
-                        lineGlyphCache[index].glyphIndex = glyphIndex;
-                    }
-                    else if (glyphIndex == 0 && lineGlyphCache[index].glyphIndex == MISSING_FLAG) {
-                        isAllCharacterHasFace = false;
-                    }
-                }
-
-                hb_font_destroy(font);
-            }
-        }
-
-
         /**
          * TODO: 找不到 glyph 时这点有问题
          */
-         if ((!charIndexes.empty() && !isAllCharacterHasFace) || (!emojiIndexes.empty() && !isAllEmojiHasFace)) {
+         if (!isAllCharacterHasFace) {
              for (auto& ele : lineGlyphCache) {
                  if (ele.faceIndex == MISSING_FLAG && ele.glyphIndex == MISSING_FLAG) {
                      const auto REPLACEMENT_CHARACTER = 0x0000FFFD;
@@ -377,10 +316,6 @@ void FaceCollection::renderGlyph(Text& text, Character& character, const FT_Face
 
 std::vector<Face>& FaceCollection::getFaces() {
     return mFaces;
-}
-
-std::vector<Face>& FaceCollection::getEmojiFaces() {
-    return mEmojiFaces;
 }
 
 

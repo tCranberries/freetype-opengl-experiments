@@ -20,8 +20,8 @@ namespace renderer {
         int topOffset = (int)(text.getFontPixelWidth() * 1.0);
         int bottomOffset = 10;
 
-        TextBox textBox(0, 0, 1800, 1000, topOffset, bottomOffset, true);
-        Alignment alignment = Alignment::LEFT_ALIGNMENT;
+        TextBox textBox(0, 0, 1800, 1000, topOffset, bottomOffset, false);
+        //Alignment alignment = Alignment::LEFT_ALIGNMENT;
 
         // 横向排版布局
         std::vector<std::vector<Character>> res;

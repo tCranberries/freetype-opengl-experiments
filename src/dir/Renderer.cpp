@@ -30,11 +30,7 @@ void Renderer::renderLine(
             unsigned int codepoint = glyphCache.codepoint;
 
             FT_Face curFace;
-            if (isEmoji) {
-                curFace = faceCollection.getEmojiFaces()[curFaceIndex].getFace();
-            } else {
-                curFace = faceCollection.getFaces()[curFaceIndex].getFace();
-            }
+            curFace = faceCollection.getFaces()[curFaceIndex].getFace();
 
             /*
              * 看 character cache 中是否存在 glyph

@@ -133,7 +133,7 @@ namespace lettera {
 
 
         const string fontArabic = "/data0/sx-render-service/workspace/fonts/Mirza-SemiBold.ttf";
-        const string font2 = "/home/wzw/CLionProjects/freetype-opengl-experiments/assets/fonts/NotoColorEmoji.ttf";
+        const string fontEmoji = "/home/wzw/CLionProjects/freetype-opengl-experiments/assets/fonts/NotoColorEmoji.ttf";
         const string fontJapan = "/home/wzw/CLionProjects/freetype-opengl-experiments/assets/japan/MS Mincho.TTF";
         const string fontLatin = "/home/wzw/CLionProjects/freetype-opengl-experiments/assets/latin/UbuntuMono.ttf";
         const string fontCh = "/home/wzw/CLionProjects/freetype-opengl-experiments/assets/ch/Alibaba-PuHuiTi-Bold.otf";
@@ -143,13 +143,13 @@ namespace lettera {
 
         vector<string> face_names;
         face_names.push_back(fontLatin);
+        face_names.push_back(fontEmoji);
         face_names.push_back(fontCh);
         face_names.push_back(fontKorean);
         face_names.push_back(fontArabic);
         face_names.push_back(fontJapan);
         face_names.push_back(fontThai);
 
-        face_names.push_back(font2);
 
 
         const unsigned int fontPixelWidth = 50;
@@ -193,8 +193,8 @@ namespace lettera {
                 0);
 
         TextureAtlas colored_texture_atlas(
-                (int)faceCollection.getEmojiFaces().at(0).getWidth(),
-                (int)faceCollection.getEmojiFaces().at(0).getHeight(),
+                (int)faceCollection.getFaces().at(1).getWidth(),
+                (int)faceCollection.getFaces().at(1).getHeight(),
                 shader.programId,
                 "colored_texture_array",
                 GL_RGBA8,

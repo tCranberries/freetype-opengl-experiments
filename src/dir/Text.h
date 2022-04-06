@@ -114,7 +114,7 @@ private:
      */
     bool isSpaceDecideNextLine{};
 
-    // 针对每一行 text 的缓存，存放一行中 每个字符 对应的 mFace index，glyph index, 现在还得区分 mFaces mEmojiFaces
+    // 针对每一行 text 的缓存，存放一行中 每个字符 对应的 mFace index，glyph index
     std::unordered_map<std::string, std::vector<ShapeCacheElement>> shapeCache;
 
     ErrorCode errorCode = ErrorCode::ok;
