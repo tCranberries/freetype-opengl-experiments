@@ -9,10 +9,44 @@
 
 
 
-//std::vector<unsigned int> FaceCollection::getUTF8(std::string line) {
-//    hb_buffer_clear_contents(buffer);
-//    hb_buffer_guess_segment_properties()
-//}
+std::vector<hb_codepoint_t> FaceCollection::getLineCodepoints(const std::string& line) {
+    std::vector<hb_codepoint_t> codePoints;
+    hb_buffer_clear_contents(buffer);
+    hb_buffer_add_utf8(buffer, line.c_str(), (int)line.length(), 0, -1);
+
+    unsigned int glyphCount;
+    hb_glyph_info_t* glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
+    for (unsigned int i = 0; i < glyphCount; i++) {
+        codePoints.push_back(glyphInfo[i].codepoint);
+    }
+    // sensor
+    //codePoints.push_back(0x20);
+
+    return codePoints;
+}
+
+std::vector<std::pair<unsigned int, unsigned int>> FaceCollection::classifyCodepoints(const std::vector<hb_codepoint_t>& codepoints) {
+    /*
+     * TODO: 不断修改该方法中的分类，以支持更多的语言
+     *  目前  中 日 英 法 泰 韩 荷兰 等语言的 unicode 可以归为一段，后续需要更多测试
+     *  阿拉伯语，希伯来语，叙利亚语等从右向左的语言需要各自单独归为一段，后续需要更多测试
+     */
+
+    assert(!codepoints.empty());
+    std::vector<std::pair<unsigned int, unsigned int>> codepointSegments;
+
+    unsigned int i = 0;
+    while (i < codepoints.size()) {
+        unsigned int start = i;
+        unsigned int flag = Util::classify(codepoints[i]);
+        while (i < codepoints.size() && flag == Util::classify(codepoints[i])) {
+            i++;
+        }
+        codepointSegments.emplace_back(start, i - start);
+    }
+
+    return codepointSegments;
+}
 
 
 
@@ -114,7 +148,8 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
             continue;
         }
 
-        // 获取该行的 utf8 编码，也就是 codepoint, 根据 codepoint 分段
+        // 获取该行的 utf8 编码，也就是 codepoint, 根据 codepoint 分组
+
 
 
         std::vector<ShapeCacheElement> lineGlyphCache;
@@ -123,9 +158,12 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
         for (unsigned int i = 0; (i < mFaces.size()) && !isAllCharacterHasFace; i++) {
             isAllCharacterHasFace = true;
 
-            hb_buffer_clear_contents(buffer);
+            std::vector<hb_codepoint_t> codePoints = getLineCodepoints(line);
+            auto segments = classifyCodepoints(codePoints);
 
-            hb_buffer_add_utf8(buffer, line.c_str(), (int)line.length(), 0, -1);
+            hb_buffer_clear_contents(buffer);
+            hb_buffer_add_codepoints(buffer, &codePoints[0], (int)codePoints.size(), 0, (int)codePoints.size());
+            //hb_buffer_add_utf8(buffer, line.c_str(), (int)line.length(), 0, -1);
 
             /*
              * HarfBuzz also provides getter functions to retrieve a buffer's direction, script, and language properties individually.
@@ -170,6 +208,7 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
             // get the glyph information
             unsigned int glyphCount;
             hb_glyph_info_t *glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
+
             for (unsigned int index = 0; index < glyphCount; index++) {
                 hb_codepoint_t glyphIndex = glyphInfo[index].codepoint;
                 if (glyphIndex != 0 && lineGlyphCache[index].faceIndex == MISSING_FLAG) {

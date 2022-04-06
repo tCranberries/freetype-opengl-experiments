@@ -143,12 +143,12 @@ namespace lettera {
 
         vector<string> face_names;
         face_names.push_back(fontLatin);
-        face_names.push_back(fontEmoji);
-        face_names.push_back(fontCh);
-        face_names.push_back(fontKorean);
+//        face_names.push_back(fontEmoji);
+//        face_names.push_back(fontCh);
+//        face_names.push_back(fontKorean);
         face_names.push_back(fontArabic);
-        face_names.push_back(fontJapan);
-        face_names.push_back(fontThai);
+//        face_names.push_back(fontJapan);
+//        face_names.push_back(fontThai);
 
 
 

@@ -76,8 +76,6 @@ public:
     // getter and setter
     std::vector<Face>& getFaces();
 
-    std::vector<Face>& getEmojiFaces();
-
     std::vector<std::string> getFontFiles() const;
 
     unsigned int getMFontPixelWidth() const;
@@ -88,7 +86,21 @@ public:
 
 private:
 
-    std::vector<unsigned int> getUTF8(std::string line);
+    /**
+     * 将 line 转化为 utf8 序列
+     *
+     * @param line line
+     * @return     utf8 序列
+     */
+    std::vector<hb_codepoint_t> getLineCodepoints(const std::string& line);
+
+    /**
+     * 针对 line 的 codepoints 进行分段，供 harfbuzz guess
+     *
+     * @param codepoints    line codepoints
+     * @return              <s, e> <s, e> <s, e>  start, length
+     */
+    std::vector<std::pair<unsigned int, unsigned int>> classifyCodepoints(const std::vector<hb_codepoint_t>& codepoints);
 
 };
 

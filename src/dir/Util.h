@@ -23,12 +23,14 @@ public:
 
     static bool isSpaceCharacter(unsigned int codepoint);
 
-    static bool isArabic(unsigned int codepoint);
-
-
-
-
-
+    /**
+     * 对 codepoint 进行分类
+     *
+     * @param flag          类标志
+     * @param codepoint     codepoint
+     * @return              true，false
+     */
+    static unsigned int classify(unsigned int codepoint);
 
     static void trimLines(std::vector<std::string>& lines);
 

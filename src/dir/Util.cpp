@@ -41,10 +41,28 @@ bool Util::isSpaceCharacter(unsigned int codepoint) {
 }
 
 
-bool Util::isArabic(unsigned int codepoint) {
-    return codepoint >= 0x0600 && codepoint <= 0x06ff;
-}
+/**
+ * 0: common left to right
+ * 1: arabic
+ * 2: hebrew
+ * 3: ...
+ *
+ */
+unsigned int Util::classify(unsigned int codepoint) {
+//    if ((codepoint >= 0 && codepoint <= 0x036F)) {  // latin
+//        return 0;
+//    }
+//
+//    if (codepoint >= 0x2E80 && codepoint <= 0x9FFF) { // ch japan kar
+//        return 0;
+//    }
 
+    if ((codepoint >= 0x0600 && codepoint <= 0x06FF) || (codepoint >= 0x0750 && codepoint <= 0x077F)) {
+        return 1;
+    }
+
+    return 0;
+}
 
 
 void Util::trimLines(std::vector<std::string>& lines) {
