@@ -7,25 +7,30 @@
 #include "Util.h"
 #include <cstdlib>
 
+void FaceCollection::getCodepoints(std::vector<unsigned int>& codepoints, const std::vector<ShapeCacheElement>& lineCache) {
+    for (const auto& ele : lineCache) {
+        codepoints.push_back(ele.codepoint);
+    }
+}
 
-
-std::vector<hb_codepoint_t> FaceCollection::getLineCodepoints(const std::string& line) {
-    std::vector<hb_codepoint_t> codePoints;
+void FaceCollection::initLineGlyphCache(const std::string& line, std::vector<ShapeCacheElement>& lineCache) {
     hb_buffer_clear_contents(buffer);
     hb_buffer_add_utf8(buffer, line.c_str(), (int)line.length(), 0, -1);
 
     unsigned int glyphCount;
     hb_glyph_info_t* glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
-    for (unsigned int i = 0; i < glyphCount; i++) {
-        codePoints.push_back(glyphInfo[i].codepoint);
-    }
-    // sensor
-    //codePoints.push_back(0x20);
 
-    return codePoints;
+    lineCache.resize(glyphCount);
+    for (unsigned int i = 0; i < glyphCount; i++) {
+        bool isEmoji = Util::isEmojiCharacter(glyphInfo[i].codepoint);
+        lineCache[i].isEmoji = isEmoji;
+        lineCache[i].codepoint = glyphInfo[i].codepoint;
+        lineCache[i].faceIndex = UINT32_MAX;
+        lineCache[i].glyphIndex = UINT32_MAX;
+    }
 }
 
-std::vector<std::pair<unsigned int, unsigned int>> FaceCollection::classifyCodepoints(const std::vector<hb_codepoint_t>& codepoints) {
+std::vector<std::pair<unsigned int, unsigned int>> FaceCollection::classifyCodepoints(const std::vector<unsigned int>& codepoints) {
     /*
      * TODO: 不断修改该方法中的分类，以支持更多的语言
      *  目前  中 日 英 法 泰 韩 荷兰 等语言的 unicode 可以归为一段，后续需要更多测试
@@ -148,94 +153,94 @@ void FaceCollection::assignCodepointsFaces(Text &text) {
             continue;
         }
 
-        // 获取该行的 utf8 编码，也就是 codepoint, 根据 codepoint 分组
-
-
-
         std::vector<ShapeCacheElement> lineGlyphCache;
+        std::vector<unsigned int> codepoints;
 
-        bool isAllCharacterHasFace = false;
-        for (unsigned int i = 0; (i < mFaces.size()) && !isAllCharacterHasFace; i++) {
-            isAllCharacterHasFace = true;
+        // 获取该行的 utf8 编码, 并初始化行缓存，也就是 codepoint, 根据 codepoint 分组
+        initLineGlyphCache(line, lineGlyphCache);
+        getCodepoints(codepoints, lineGlyphCache);
+        std::vector<std::pair<unsigned int, unsigned int>> segments = classifyCodepoints(codepoints);
 
-            std::vector<hb_codepoint_t> codePoints = getLineCodepoints(line);
-            auto segments = classifyCodepoints(codePoints);
-
-            hb_buffer_clear_contents(buffer);
-            hb_buffer_add_codepoints(buffer, &codePoints[0], (int)codePoints.size(), 0, (int)codePoints.size());
-            //hb_buffer_add_utf8(buffer, line.c_str(), (int)line.length(), 0, -1);
-
-            /*
-             * HarfBuzz also provides getter functions to retrieve a buffer's direction, script, and language properties individually.
-             * HarfBuzz recognizes four text directions in hb_direction_t: left-to-right (HB_DIRECTION_LTR), right-to-left (HB_DIRECTION_RTL), top-to-bottom (HB_DIRECTION_TTB), and bottom-to-top (HB_DIRECTION_BTT).
-             * For the script property, HarfBuzz uses identifiers based on the ISO 15924 standard. For languages, HarfBuzz uses tags based on the IETF BCP 47 standard.
-             * Helper functions are provided to convert character strings into the necessary script and language tag types.
-             */
-
-            hb_buffer_guess_segment_properties(buffer);
-
-            FT_Face face = mFaces[i].getFace();
-            hb_font_t *font = hb_ft_font_create(face, nullptr);
-
-            /*
-             * 初始化
-             */
-            if (i == 0) {
-                unsigned int _glyphCount;
-                hb_glyph_info_t *_glyphInfo = hb_buffer_get_glyph_infos(buffer, &_glyphCount);
-                lineGlyphCache.resize(_glyphCount);
-
-                std::cout << "line.size(): " << line.size() << std::endl;
-                for (unsigned int k = 0; k < _glyphCount; k++) {
-                    bool isEmoji = Util::isEmojiCharacter(_glyphInfo[k].codepoint);
-
-                    std::cout << k << ":   codepoint: " << std::hex << _glyphInfo[k].codepoint << std::endl;
-
-                    lineGlyphCache[k].isEmoji = isEmoji;
-                    lineGlyphCache[k].codepoint = _glyphInfo[k].codepoint;
-                    lineGlyphCache[k].faceIndex = MISSING_FLAG;
-                    lineGlyphCache[k].glyphIndex = MISSING_FLAG;
-                }
-            }
-
-            std::vector<hb_feature_t> features(3);
-            assert(hb_feature_from_string("kern=1", -1, &features[0]));
-            assert(hb_feature_from_string("liga=1", -1, &features[1]));
-            assert(hb_feature_from_string("clig=1", -1, &features[2]));
-            // shape the font
-            hb_shape(font, buffer, &features[0], features.size());
-
-            // get the glyph information
-            unsigned int glyphCount;
-            hb_glyph_info_t *glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
-
-            for (unsigned int index = 0; index < glyphCount; index++) {
-                hb_codepoint_t glyphIndex = glyphInfo[index].codepoint;
-                if (glyphIndex != 0 && lineGlyphCache[index].faceIndex == MISSING_FLAG) {
-                    lineGlyphCache[index].faceIndex = i;
-                    lineGlyphCache[index].glyphIndex = glyphIndex;
-                }
-                else if (glyphIndex == 0 && lineGlyphCache[index].glyphIndex == MISSING_FLAG) {
-                    isAllCharacterHasFace = false;
-                }
-            }
-
-            hb_font_destroy(font);
-        }
-
-        /**
-         * TODO: 找不到 glyph 时这点有问题
+        /*
+         * diff segments
          */
-         if (!isAllCharacterHasFace) {
-             for (auto& ele : lineGlyphCache) {
-                 if (ele.faceIndex == MISSING_FLAG && ele.glyphIndex == MISSING_FLAG) {
-                     const auto REPLACEMENT_CHARACTER = 0x0000FFFD;
-                     ele.faceIndex = 0;
-                     // 当本 face 中没有 该char 的字形时， 有可能崩溃，修改
-                     ele.glyphIndex = FT_Get_Char_Index(mFaces[0].getFace(), REPLACEMENT_CHARACTER);
-                 }
-             }
-         }
+        unsigned int curIndex{};
+        for (auto segment: segments) {
+            unsigned int offset = segment.first;
+            unsigned int itemLength = segment.second;
+
+            /*
+             * diff faces
+             */
+            bool isAllCharacterHasFace = false;
+            std::unordered_set<unsigned int> nonFaceIndexes{};
+            for (unsigned int i = 0; (i < mFaces.size()) && !isAllCharacterHasFace; i++) {
+                isAllCharacterHasFace = true;
+                nonFaceIndexes.clear();
+
+                hb_buffer_clear_contents(buffer);
+                hb_buffer_add_codepoints(buffer, &codepoints[0], (int)codepoints.size(), offset, (int)itemLength);
+                hb_buffer_guess_segment_properties(buffer);
+
+                {
+//            hb_buffer_clear_contents(buffer);
+//            hb_buffer_add_codepoints(buffer, &codePoints[0], (int)codePoints.size(), 0, (int)codePoints.size());
+//            //hb_buffer_add_utf8(buffer, line.c_str(), (int)line.length(), 0, -1);
+//
+//            /*
+//             * HarfBuzz also provides getter functions to retrieve a buffer's direction, script, and language properties individually.
+//             * HarfBuzz recognizes four text directions in hb_direction_t: left-to-right (HB_DIRECTION_LTR), right-to-left (HB_DIRECTION_RTL), top-to-bottom (HB_DIRECTION_TTB), and bottom-to-top (HB_DIRECTION_BTT).
+//             * For the script property, HarfBuzz uses identifiers based on the ISO 15924 standard. For languages, HarfBuzz uses tags based on the IETF BCP 47 standard.
+//             * Helper functions are provided to convert character strings into the necessary script and language tag types.
+//             */
+//
+//            hb_buffer_guess_segment_properties(buffer);
+                }
+                FT_Face face = mFaces[i].getFace();
+                hb_font_t *font = hb_ft_font_create(face, nullptr);
+
+                std::vector<hb_feature_t> features(3);
+                assert(hb_feature_from_string("kern=1", -1, &features[0]));
+                assert(hb_feature_from_string("liga=1", -1, &features[1]));
+                assert(hb_feature_from_string("clig=1", -1, &features[2]));
+                // shape the font
+                hb_shape(font, buffer, &features[0], features.size());
+
+                // get the glyph information
+                unsigned int glyphCount;
+                hb_glyph_info_t *glyphInfo = hb_buffer_get_glyph_infos(buffer, &glyphCount);
+
+                for (unsigned int index = 0; index < glyphCount; index++) {
+                    hb_codepoint_t glyphIndex = glyphInfo[index].codepoint;
+
+                    if (glyphIndex != 0 && lineGlyphCache[index + curIndex].faceIndex == MISSING_FLAG) {
+                        lineGlyphCache[index + curIndex].faceIndex = i;
+                        lineGlyphCache[index + curIndex].glyphIndex = glyphIndex;
+                    }
+                    else if (glyphIndex == 0 && lineGlyphCache[index + curIndex].glyphIndex == MISSING_FLAG) {
+                        isAllCharacterHasFace = false;
+                        nonFaceIndexes.insert(index + curIndex);
+                    }
+                }
+
+                hb_font_destroy(font);
+            }
+
+            /**
+             * can not find glyph index
+             */
+            if (!isAllCharacterHasFace && !nonFaceIndexes.empty()) {
+                for (auto index : nonFaceIndexes) {
+                    if (lineGlyphCache[index].faceIndex == MISSING_FLAG && lineGlyphCache[index].glyphIndex == MISSING_FLAG) {
+                        const auto REPLACEMENT_CHARACTER = 0x0000FFFD;
+                        lineGlyphCache[index].faceIndex = 0;
+                        // 当本 face 中没有 该char 的字形时， 有可能崩溃，修改
+                        lineGlyphCache[index].glyphIndex = FT_Get_Char_Index(mFaces[0].getFace(), REPLACEMENT_CHARACTER);
+                    }
+                }
+            }
+            curIndex += itemLength;
+        }
 
         text.insertShapeCache(line, lineGlyphCache);
     }

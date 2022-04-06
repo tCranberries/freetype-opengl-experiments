@@ -16,6 +16,7 @@
 
 #include <cassert>
 #include <vector>
+#include <unordered_set>
 
 #include "Face.h"
 #include "ErrorCode.h"
@@ -92,7 +93,7 @@ private:
      * @param line line
      * @return     utf8 序列
      */
-    std::vector<hb_codepoint_t> getLineCodepoints(const std::string& line);
+    void initLineGlyphCache(const std::string& line, std::vector<ShapeCacheElement>& lineCache);
 
     /**
      * 针对 line 的 codepoints 进行分段，供 harfbuzz guess
@@ -100,7 +101,9 @@ private:
      * @param codepoints    line codepoints
      * @return              <s, e> <s, e> <s, e>  start, length
      */
-    std::vector<std::pair<unsigned int, unsigned int>> classifyCodepoints(const std::vector<hb_codepoint_t>& codepoints);
+    std::vector<std::pair<unsigned int, unsigned int>> classifyCodepoints(const std::vector<unsigned int>& codepoints);
+
+    void getCodepoints(std::vector<unsigned int>& codepoints, const std::vector<ShapeCacheElement>& lineCache);
 
 };
 
